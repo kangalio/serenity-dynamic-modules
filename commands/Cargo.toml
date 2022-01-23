@@ -1,0 +1,10 @@
+[package]
+name = "commands"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+serenity = { version = "0.10.10", default-features = false, features = ["rustls_backend", "model", "client", "gateway"] }
