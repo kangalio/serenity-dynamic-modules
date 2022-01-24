@@ -54,18 +54,28 @@ General instructions for setting up dynamically loadable modules for serenity:
     unsafe {
         let lib = libloading::Library::new("target/debug/libcommands.so")?;
         // Make sure to use the correct function signature here, or you'll get UB and crashes!
-        let func = lib.get::<fn(Context, Message) -> BoxFuture<Result<()>>>()?;
+        let func = lib.get::<fn(Context, Message) -> BoxFuture<Result<()>>>(b"ping")?;
 
         // Calling the function we just loaded!
         func(ctx, msg).await?;
     }
     ```
 
-You will need to cache the `Library` struct because loading a shared library is very slow.
+You will need to cache the `Library` struct because loading a shared library is very slow. In this
+repo for example, the library is loaded manually using `load` and `unload` commands
+(see bot/src/main.rs).
 
 Also, make sure the main bot process and the shared library are using identical compiler versions and
 identical dependency versions. To ensure the latter, you can put both crates into a single workspace
 (as done in this repo).
+
+## Why unload and load separately instead of a single reload command?
+
+The shared library file must not be modified before the library is unloaded, because shared libraries
+have destructor functions. If you change the file, the destructor functions point into garbage.
+
+Therefore the correct procedure is: unload the module, _then_ replace the shared library, _then_
+load the module again.
 
 ## What not to do
 
